@@ -1,0 +1,134 @@
+<!doctype HTML>
+<html>
+<head>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+    <script>
+        AFRAME.registerComponent('stopwatch', {
+            schema: {
+                isRunning: { type: 'boolean', default: false },
+                startTime: { type: 'number', default: 0 },
+                elapsedTime: { type: 'number', default: 0 }
+            },
+            init: function () {
+                let hoverTimeout = null;
+                let hasStarted = false;
+                const textEntity = this.el.querySelector('.stopwatch-text'); // クラスで取得
+                const frameEntity = this.el.querySelector('.stopwatch-frame'); // クラスで取得
+
+                // 3秒間重なっていたらタイマーを開始する処理
+                this.el.addEventListener('mouseenter', () => {
+                    if (!hasStarted) {
+                        hoverTimeout = setTimeout(() => {
+                            // タイマー開始
+                            this.data.isRunning = true;
+                            this.data.startTime = Date.now() - this.data.elapsedTime;
+                            hasStarted = true;
+                            frameEntity.setAttribute('visible', true); // 枠を表示
+                        }, 3000);
+                    } else {
+                        hoverTimeout = setTimeout(() => {
+                            // タイマー停止
+                            this.data.isRunning = false;
+                            hasStarted = false;
+                            frameEntity.setAttribute('visible', false); // 枠を非表示に
+                        }, 3000);
+                    }
+                });
+
+				this.el.addEventListener('mouseenter', () => {
+					// 5秒間重なっていたらタイマーをリセット
+					resetTimeout = setTimeout(() => {
+						// タイマーをリセット
+						this.data.elapsedTime = 0;
+						this.data.startTime = Date.now();
+						if (textEntity) {
+							textEntity.setAttribute('text', 'value', '00:00');
+						}
+					}, 5000); // 5秒間重なった後にリセット
+                });
+
+                this.el.addEventListener('mouseleave', () => {
+                    // カーソルが離れた時にキャンセル
+					clearTimeout(hoverTimeout);
+					clearTimeout(resetTimeout);
+                });
+
+                // タップでタイマーをリセットする処理
+                this.el.addEventListener('click', () => {
+                    // タイマーの経過時間をリセット
+                    this.data.elapsedTime = 0;
+                    this.data.startTime = Date.now();
+                    if (textEntity) {
+                        // テキストをリセットして「00:00」に戻す
+                        textEntity.setAttribute('text', 'value', '00:00');
+                    }
+                });
+
+                // 定期的に時間を更新
+                this.updateInterval = setInterval(() => {
+                    if (this.data.isRunning) {
+                        const currentTime = Date.now();
+                        this.data.elapsedTime = currentTime - this.data.startTime;
+
+                        // 分と秒のフォーマットに変換
+                        const totalSeconds = Math.floor(this.data.elapsedTime / 1000);
+                        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                        const seconds = String(totalSeconds % 60).padStart(2, '0');
+                        textEntity.setAttribute('text', 'value', `${minutes}:${seconds}`);
+                    }
+                }, 1000); // 1秒ごとに更新
+            },
+            remove: function () {
+                // クリーンアップ
+                clearInterval(this.updateInterval);
+            }
+        });
+    </script>
+
+</head>
+
+<body style='margin:0px; overflow:hidden;'>
+    <a-scene embedded arjs>
+        <a-marker preset="custom" type="pattern" url="./pattern-chrome.patt" stopwatch>
+            <!-- 赤枠表示 -->
+            <a-plane class="stopwatch-frame" color="#FF0000" width="2.6" height="1.1" position="0 0 0" rotation="-90 0 0" visible="false" opacity="0.5"></a-plane>
+
+            <!-- タイマー背景表示 -->
+            <a-plane stopwatch color="#FFFFFF" width="2.5" height="1" position="0 0.2 0" rotation="-90 0 0"></a-plane>
+
+            <!-- ストップウォッチ表示 -->
+            <a-entity class="stopwatch-text" text="value: 00:00; align: center; color: #FF0000" position="0 0.2 0.1" rotation="-90 0 0" scale="10 10 10"></a-entity>
+        </a-marker>
+
+        <a-marker preset="custom" type="pattern" url="./a.patt" stopwatch>
+            <!-- 青枠表示 -->
+            <a-plane class="stopwatch-frame" color="#0000FF" width="2.6" height="1.1" position="0 0 0" rotation="-90 0 0" visible="false" opacity="0.5"></a-plane>
+
+            <!-- タイマー背景表示 -->
+            <a-plane stopwatch color="#FFFFFF" width="2.5" height="1" position="0 0.2 0" rotation="-90 0 0"></a-plane>
+
+            <!-- ストップウォッチ表示 -->
+            <a-entity class="stopwatch-text" text="value: 00:00; align: center; color: #0000FF" position="0 0.2 0.1" rotation="-90 0 0" scale="10 10 10"></a-entity>
+        </a-marker>
+
+		<a-marker preset="custom" type="pattern" url="./pattern-nature_stone_iwa.patt" stopwatch>
+            <!-- 青枠表示 -->
+            <a-plane class="stopwatch-frame" color="#00FF00" width="2.6" height="1.1" position="0 0 0" rotation="-90 0 0" visible="false" opacity="0.5"></a-plane>
+
+            <!-- タイマー背景表示 -->
+            <a-plane stopwatch color="#FFFFFF" width="2.5" height="1" position="0 0.2 0" rotation="-90 0 0"></a-plane>
+
+            <!-- ストップウォッチ表示 -->
+            <a-entity class="stopwatch-text" text="value: 00:00; align: center; color: #00FF00" position="0 0.2 0.1" rotation="-90 0 0" scale="10 10 10"></a-entity>
+        </a-marker>
+
+        <a-entity camera>
+            <a-cursor></a-cursor>
+        </a-entity>
+
+    </a-scene>
+</body>
+
+</html>
